@@ -1693,3 +1693,39 @@ th {
     position: absolute;
     left: 0;
 }
+
+/* Remove the large QR icon from Material section */
+.gear-icon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--primary-color);
+    stroke-width: 1.5;
+    min-width: 24px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Update section header styles */
+.sub-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 2.4rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    text-shadow: 0 0 10px rgba(0, 168, 255, 0.4);
+    padding: 2rem;
+    background: var(--background-color);
+    justify-content: flex-start;
+}
+
+/* Remove any potential overlays */
+.sub-header {
+    position: relative;
+    overflow: visible;
+}
+
+/* Ensure no absolute positioning of icons */
+.sub-header svg {
+    position: relative;
+}
