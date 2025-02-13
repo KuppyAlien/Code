@@ -218,7 +218,7 @@ class ComponentManager {
                 <td>${component.quantity}</td>
                 <td>${component.location}</td>
                 <td>${new Date(component.dateAdded).toLocaleString('vi-VN')}</td>
-                <td>${component.dateIssued ? new Date(component.dateIssued).toLocaleString('vi-VN') : 'Unissued'}</td>
+                <td>${component.dateIssued ? new Date(component.dateIssued).toLocaleString('vi-VN') : 'Unused'}</td>
                 <td>${component.notes}</td>
             `;
             tableBody.appendChild(row);
@@ -1555,27 +1555,6 @@ class ComponentManager {
 
     deleteUser(userId) {
         // Implement delete user
-    }
-
-    toggleMachineContent(header) {
-        const content = header.nextElementSibling;
-        const isExpanded = header.classList.contains('expanded');
-        
-        // Toggle the expanded class
-        header.classList.toggle('expanded');
-        
-        // Toggle content visibility with animation
-        if (isExpanded) {
-            content.style.maxHeight = '0';
-            setTimeout(() => {
-                content.style.display = 'none';
-            }, 300);
-        } else {
-            content.style.display = 'block';
-            setTimeout(() => {
-                content.style.maxHeight = content.scrollHeight + 'px';
-            }, 0);
-        }
     }
 }
 

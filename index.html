@@ -29,6 +29,9 @@
             <div class="header-content">
                 <h1>
                     <a href="#" onclick="componentManager.showHomePage()" class="logo-link">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0yMCAxMkg4MEw5MCA2MEgxMEwyMCAxMloiIHN0cm9rZT0iIzAwZmY4OCIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxwYXRoIGQ9Ik0zNSAyNUw1MCA1MEw2NSAyNSIgc3Ryb2tlPSIjMDBmZjg4IiBzdHJva2Utd2lkdGg9IjIiLz4KPHRleHQgeD0iNTAiIHk9IjgwIiBmb250LXNpemU9IjEyIiBmaWxsPSIjMDBmZjg4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBsZXR0ZXItc3BhY2luZz0iMC4zZW0iPnYgaSBlIHQgcCBoIHU8L3RleHQ+Cjwvc3ZnPg==" 
+                            alt="VietPhu Logo" 
+                            class="vietphu-logo">
                         <span class="header-text">
                             <div class="header-line1">MANAGEMENT SYSTEM</div>
                         </span>
@@ -297,367 +300,101 @@
                     PRODUCTION
                 </h2>
                 
-                <!-- Add VPQR file before machine categories -->
+                <!-- Create production content container -->
                 <div class="production-content">
-                    <!-- Enhanced VPQR Excel File -->
-                    <div class="file-item vpqr-file">
-                        <div class="file-icon-wrapper">
-                            <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                            </svg>
-                            <svg class="qr-overlay" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M3 3h7v7H3z" stroke-width="1.5"/>
-                                <path d="M14 3h7v7h-7z" stroke-width="1.5"/>
-                                <path d="M3 14h7v7H3z" stroke-width="1.5"/>
-                                <rect x="14" y="14" width="3" height="3" stroke-width="1.5"/>
-                                <path d="M20 14v3m0 4v-4m-3 4h3" stroke-width="1.5"/>
-                            </svg>
-                        </div>
-                        <span class="vpqr-text">VPQR.xlsx</span>
-                    </div>
-
                     <!-- 1. Máy Bông -->
                     <div class="machine-category card">
-                        <div class="category-header" onclick="componentManager.toggleMachineContent(this)">
+                        <div class="category-header">
                             <h2>
                                 <svg class="machine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M3 12h18M3 18h18" stroke-width="1.5" stroke-linecap="round"/>
                                 </svg>
                                 Máy Bông
-                                <!-- Add expand/collapse arrow -->
-                                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
                             </h2>
-                        </div>
-                        <div class="machine-content" style="display: none;">
-                            <!-- Content will be populated here -->
-                            <div class="machine-folders">
-                                <!-- Subfolder 1 -->
-                                <div class="folder-item" onclick="componentManager.toggleFolder(this)">
-                                    <div class="folder-header">
-                                        <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                                        </svg>
-                                        <span>Bảo Dưỡng, Lịch Xích, Trùng Tu</span>
-                                    </div>
-                                </div>
-
-                                <!-- Subfolder 2 -->
-                                <div class="folder-item" onclick="componentManager.toggleFolder(this)">
-                                    <div class="folder-header">
-                                        <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                                        </svg>
-                                        <span>MÁY BÔNG COTTON</span>
-                                        <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </div>
-                                    <div class="folder-content" style="display: none;">
-                                        <!-- Excel Files -->
-                                        <div class="file-item enhanced-file">
-                                            <div class="file-icon-wrapper">
-                                                <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                    <polyline points="14 2 14 8 20 8"/>
-                                                    <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                                                </svg>
-                                            </div>
-                                            <span class="excel-text">1. XÉ KIỆN DÀI</span>
-                                        </div>
-
-                                        <div class="file-item enhanced-file">
-                                            <div class="file-icon-wrapper">
-                                                <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                    <polyline points="14 2 14 8 20 8"/>
-                                                    <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                                                </svg>
-                                            </div>
-                                            <span class="excel-text">2. TÁCH VẬT NẶNG</span>
-                                        </div>
-
-                                        <div class="file-item enhanced-file">
-                                            <div class="file-icon-wrapper">
-                                                <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                    <polyline points="14 2 14 8 20 8"/>
-                                                    <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                                                </svg>
-                                            </div>
-                                            <span class="excel-text">3. XÉ 1 TRỤC</span>
-                                        </div>
-
-                                        <div class="file-item enhanced-file">
-                                            <div class="file-icon-wrapper">
-                                                <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                    <polyline points="14 2 14 8 20 8"/>
-                                                    <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                                                </svg>
-                                            </div>
-                                            <span class="excel-text">4. TRỘN 8 BUỒNG COTTON</span>
-                                        </div>
-
-                                        <div class="file-item enhanced-file">
-                                            <div class="file-icon-wrapper">
-                                                <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                    <polyline points="14 2 14 8 20 8"/>
-                                                    <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                                                </svg>
-                                            </div>
-                                            <span class="excel-text">5. MÁY XÉ TINH</span>
-                                        </div>
-
-                                        <div class="file-item enhanced-file">
-                                            <div class="file-icon-wrapper">
-                                                <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                    <polyline points="14 2 14 8 20 8"/>
-                                                    <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                                                </svg>
-                                            </div>
-                                            <span class="excel-text">6. TÁCH XƠ NGOẠI LAI</span>
-                                        </div>
-
-                                        <div class="file-item enhanced-file">
-                                            <div class="file-icon-wrapper">
-                                                <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                                    <polyline points="14 2 14 8 20 8"/>
-                                                    <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                                                </svg>
-                                            </div>
-                                            <span class="excel-text">7. MÁY LÀM SẠCH</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Subfolder 3 -->
-                                <div class="folder-item" onclick="componentManager.toggleFolder(this)">
-                                    <div class="folder-header">
-                                        <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                                        </svg>
-                                        <span>MÁY BÔNG PE</span>
-                                    </div>
-                                </div>
-
-                                <!-- Subfolder 4 -->
-                                <div class="folder-item" onclick="componentManager.toggleFolder(this)">
-                                    <div class="folder-header">
-                                        <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                                        </svg>
-                                        <span>MÁY BÔNG TC</span>
-                                    </div>
-                                </div>
-
-                                <!-- Excel File -->
-                                <div class="file-item enhanced-file">
-                                    <div class="file-icon-wrapper">
-                                        <svg class="file-icon excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                            <polyline points="14 2 14 8 20 8"/>
-                                            <text x="8" y="19" font-size="8" fill="currentColor">XLS</text>
-                                        </svg>
-                                    </div>
-                                    <span class="excel-text">TRUNG TÂM BỤI 1 + 2</span>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
                     <!-- 2. Máy Chải Thô -->
                     <div class="machine-category card">
-                        <div class="category-header" onclick="componentManager.toggleMachineContent(this)">
+                        <div class="category-header">
                             <h2>
                                 <svg class="machine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M3 12h18M3 18h18" stroke-width="1.5" stroke-linecap="round"/>
                                 </svg>
                                 Máy Chải Thô
-                                <!-- Add expand/collapse arrow -->
-                                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
                             </h2>
-                        </div>
-                        <div class="machine-content" style="display: none;">
-                            <!-- Content will be populated here -->
-                            <div class="machine-details">
-                                <p>Machine Details:</p>
-                                <ul>
-                                    <li>Status: Active</li>
-                                    <li>Maintenance Schedule: Monthly</li>
-                                    <li>Last Maintenance: 2024-03-15</li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
 
                     <!-- 3. Máy Cuộn -->
                     <div class="machine-category card">
-                        <div class="category-header" onclick="componentManager.toggleMachineContent(this)">
+                        <div class="category-header">
                             <h2>
                                 <svg class="machine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M3 12h18M3 18h18" stroke-width="1.5" stroke-linecap="round"/>
                                 </svg>
                                 Máy Cuộn
-                                <!-- Add expand/collapse arrow -->
-                                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
                             </h2>
-                        </div>
-                        <div class="machine-content" style="display: none;">
-                            <!-- Content will be populated here -->
-                            <div class="machine-details">
-                                <p>Machine Details:</p>
-                                <ul>
-                                    <li>Status: Active</li>
-                                    <li>Maintenance Schedule: Monthly</li>
-                                    <li>Last Maintenance: 2024-03-15</li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
 
                     <!-- 4. Máy Chãi Kỹ -->
                     <div class="machine-category card">
-                        <div class="category-header" onclick="componentManager.toggleMachineContent(this)">
+                        <div class="category-header">
                             <h2>
                                 <svg class="machine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M3 12h18M3 18h18" stroke-width="1.5" stroke-linecap="round"/>
                                 </svg>
                                 Máy Chãi Kỹ
-                                <!-- Add expand/collapse arrow -->
-                                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
                             </h2>
-                        </div>
-                        <div class="machine-content" style="display: none;">
-                            <!-- Content will be populated here -->
-                            <div class="machine-details">
-                                <p>Machine Details:</p>
-                                <ul>
-                                    <li>Status: Active</li>
-                                    <li>Maintenance Schedule: Monthly</li>
-                                    <li>Last Maintenance: 2024-03-15</li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
 
                     <!-- 5. Máy Ghép -->
                     <div class="machine-category card">
-                        <div class="category-header" onclick="componentManager.toggleMachineContent(this)">
+                        <div class="category-header">
                             <h2>
                                 <svg class="machine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M3 12h18M3 18h18" stroke-width="1.5" stroke-linecap="round"/>
                                 </svg>
                                 Máy Ghép
-                                <!-- Add expand/collapse arrow -->
-                                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
                             </h2>
-                        </div>
-                        <div class="machine-content" style="display: none;">
-                            <!-- Content will be populated here -->
-                            <div class="machine-details">
-                                <p>Machine Details:</p>
-                                <ul>
-                                    <li>Status: Active</li>
-                                    <li>Maintenance Schedule: Monthly</li>
-                                    <li>Last Maintenance: 2024-03-15</li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
 
                     <!-- 6. Máy Thô -->
                     <div class="machine-category card">
-                        <div class="category-header" onclick="componentManager.toggleMachineContent(this)">
+                        <div class="category-header">
                             <h2>
                                 <svg class="machine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M3 12h18M3 18h18" stroke-width="1.5" stroke-linecap="round"/>
                                 </svg>
                                 Máy Thô
-                                <!-- Add expand/collapse arrow -->
-                                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
                             </h2>
-                        </div>
-                        <div class="machine-content" style="display: none;">
-                            <!-- Content will be populated here -->
-                            <div class="machine-details">
-                                <p>Machine Details:</p>
-                                <ul>
-                                    <li>Status: Active</li>
-                                    <li>Maintenance Schedule: Monthly</li>
-                                    <li>Last Maintenance: 2024-03-15</li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
 
                     <!-- 7. Máy Con -->
                     <div class="machine-category card">
-                        <div class="category-header" onclick="componentManager.toggleMachineContent(this)">
+                        <div class="category-header">
                             <h2>
                                 <svg class="machine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M3 12h18M3 18h18" stroke-width="1.5" stroke-linecap="round"/>
                                 </svg>
                                 Máy Con
-                                <!-- Add expand/collapse arrow -->
-                                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
                             </h2>
-                        </div>
-                        <div class="machine-content" style="display: none;">
-                            <!-- Content will be populated here -->
-                            <div class="machine-details">
-                                <p>Machine Details:</p>
-                                <ul>
-                                    <li>Status: Active</li>
-                                    <li>Maintenance Schedule: Monthly</li>
-                                    <li>Last Maintenance: 2024-03-15</li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
 
                     <!-- 8. Máy Ống -->
                     <div class="machine-category card">
-                        <div class="category-header" onclick="componentManager.toggleMachineContent(this)">
+                        <div class="category-header">
                             <h2>
                                 <svg class="machine-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M3 12h18M3 18h18" stroke-width="1.5" stroke-linecap="round"/>
                                 </svg>
                                 Máy Ống
-                                <!-- Add expand/collapse arrow -->
-                                <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
                             </h2>
-                        </div>
-                        <div class="machine-content" style="display: none;">
-                            <!-- Content will be populated here -->
-                            <div class="machine-details">
-                                <p>Machine Details:</p>
-                                <ul>
-                                    <li>Status: Active</li>
-                                    <li>Maintenance Schedule: Monthly</li>
-                                    <li>Last Maintenance: 2024-03-15</li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -793,4 +530,4 @@
 
     <script src="app.js"></script>
 </body>
-</html>
+</html> 
