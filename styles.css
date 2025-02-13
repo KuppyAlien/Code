@@ -1388,18 +1388,36 @@ th {
     transform: rotate(10deg) scale(1.1);
 }
 
-/* Add QR icon styles */
+/* Update QR icon styles to be smaller and properly positioned */
 .qr-icon {
     width: 24px;
     height: 24px;
     stroke: var(--primary-color);
     stroke-width: 1.5;
+    min-width: 24px;  /* Prevent stretching */
+    position: relative; /* Remove any absolute positioning */
+    display: inline-flex; /* Keep it inline with text */
 }
 
-/* Add hover effect */
-.section-header:hover .qr-icon {
-    transform: scale(1.1);
-    transition: transform 0.3s ease;
+/* Remove any centering styles that might affect the QR icon */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-start;
+}
+
+/* Ensure icons stay with their headers */
+.section-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Remove any overlay positioning */
+.qr-overlay {
+    position: relative;
+    transform: none;
 }
 
 /* Add request icon styles */
