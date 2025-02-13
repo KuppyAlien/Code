@@ -92,6 +92,10 @@ class ComponentManager {
         this.renderUsers();
         this.renderRequests();
         this.initSecuritySettings();
+        this.savedForms = JSON.parse(localStorage.getItem('savedForms')) || [];
+        this.signaturePads = new Map(); // Store signature pad instances
+        this.notifications = [];
+        this.initNotifications();
     }
 
     initScanner() {
@@ -124,9 +128,9 @@ class ComponentManager {
                 // Not logged in - show login prompt
                 document.getElementById('result').innerHTML = 
                     `<p style="color: var(--primary-color)">
-                        Vui lòng <button class="btn btn-edit" onclick="componentManager.showLoginDialog()">
-                            đăng nhập
-                        </button> để tương tác với linh kiện
+                        Please <button class="btn btn-edit" onclick="componentManager.showLoginDialog()">
+                            login
+                        </button> to interact with the component
                     </p>`;
                 return;
             }
@@ -153,15 +157,15 @@ class ComponentManager {
         
         if (existingComponent) {
             existingComponent.quantity += componentData.quantity || 1;
-            existingComponent.notes += `\nBổ sung ${componentData.quantity || 1} đơn vị vào ${new Date().toLocaleString('vi-VN')}`;
+            existingComponent.notes += `\nAdded ${componentData.quantity || 1} units to ${new Date().toLocaleString('vi-VN')}`;
         } else {
             const newComponent = new Component(
                 componentData.id,
                 componentData.name,
                 componentData.quantity || 1,
-                componentData.location || 'Chưa xác định'
+                componentData.location || 'Unspecified'
             );
-            newComponent.notes = `Nhập kho lần đầu: ${componentData.quantity || 1} đơn vị`;
+            newComponent.notes = `First entry: ${componentData.quantity || 1} units`;
             this.components.push(newComponent);
         }
         
@@ -179,8 +183,8 @@ class ComponentManager {
         const component = this.components.find(c => c.id === id);
         if (!component) return;
 
-        const newQuantity = prompt('Nhập lượng hợp lệ:', component.quantity);
-        const newLocation = prompt('Nhập vị trí hợp lệ:', component.location);
+        const newQuantity = prompt('Enter a valid quantity:', component.quantity);
+        const newLocation = prompt('Enter a valid location:', component.location);
 
         if (newQuantity !== null && newLocation !== null) {
             component.quantity = parseInt(newQuantity) || component.quantity;
@@ -214,7 +218,7 @@ class ComponentManager {
                 <td>${component.quantity}</td>
                 <td>${component.location}</td>
                 <td>${new Date(component.dateAdded).toLocaleString('vi-VN')}</td>
-                <td>${component.dateIssued ? new Date(component.dateIssued).toLocaleString('vi-VN') : 'Chưa xuất'}</td>
+                <td>${component.dateIssued ? new Date(component.dateIssued).toLocaleString('vi-VN') : 'Unissued'}</td>
                 <td>${component.notes}</td>
             `;
             tableBody.appendChild(row);
@@ -277,23 +281,24 @@ class ComponentManager {
         const dialog = document.createElement('div');
         dialog.className = 'login-dialog';
         dialog.innerHTML = `
-            <h3>Đăng Nhập</h3>
-            <div class="login-form">
+            <div class="login-content">
+                <h3>Login</h3>
                 <div class="form-group">
-                    <label for="userId">Mã người dùng:</label>
-                    <input type="text" id="userId" placeholder="Nhập mã người dùng (VD: A1, R1)">
+                    <label for="userId">User ID:</label>
+                    <input type="text" id="userId" placeholder="Enter user ID">
                 </div>
                 <div class="form-group">
-                    <label for="passwordInput">Mật khẩu:</label>
-                    <input type="password" id="passwordInput" placeholder="Nhập mật khẩu">
-                    <button class="forgot-password-btn" onclick="componentManager.showForgotPasswordDialog()">
-                        Quên mật khẩu?
-                    </button>
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="Enter password">
                 </div>
                 <div class="error-message" id="loginError" style="display: none;"></div>
                 <div class="dialog-buttons">
-                    <button class="btn btn-edit">Đăng Nhập</button>
-                    <button class="btn btn-delete">Hủy</button>
+                    <button class="btn btn-edit" onclick="componentManager.login()">
+                        Login
+                    </button>
+                    <button class="btn btn-delete" onclick="this.closest('.login-dialog').remove()">
+                        Cancel
+                    </button>
                 </div>
             </div>
         `;
@@ -312,33 +317,34 @@ class ComponentManager {
         setInterval(() => this.cleanupExpiredSessions(), 5 * 60 * 1000);
     }
 
-    login() {
-        const userId = document.getElementById('userId').value;
-        const password = document.getElementById('passwordInput').value;
-        const errorElement = document.getElementById('loginError');
-        
-        if (!userId || !password) {
-            errorElement.textContent = 'Vui lòng điền đầy đủ thông tin';
-            errorElement.style.display = 'block';
-            return;
-        }
+    login(userId, password) {
+        const user = users[userId];
+        if (user && user.password === password) {
+            // Set current user
+            localStorage.setItem('currentUser', JSON.stringify({
+                id: userId,
+                name: user.name,
+                role: user.role,
+                phone: user.phone
+            }));
 
-        const user = this.users.find(u => u.id === userId);
-        
-        if (!user || user.password !== password) {
-            errorElement.textContent = 'Mã người dùng hoặc mật khẩu không đúng';
-            errorElement.style.display = 'block';
-            return;
-        }
+            // Update UI
+            document.getElementById('loginStatus').textContent = `Welcome, ${user.name}`;
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'inline-block';
+            
+            // Show profile page immediately after login
+            this.showProfilePage();
 
-        this.currentUser = user;
-        document.getElementById('loginStatus').textContent = `Đã đăng nhập với: ${user.name}`;
-        document.querySelector('.login-dialog').remove();
-        
-        document.getElementById('logoutBtn').style.display = 'block';
-        document.getElementById('loginBtn').style.display = 'none';
-        
-        this.showProfile();
+            // Show admin-only buttons if user is admin
+            if (user.role === 'admin') {
+                document.getElementById('usersBtn').style.display = 'inline-block';
+            }
+
+            this.showNotification('Login successful!', 'success');
+        } else {
+            this.showNotification(errorMessages.invalidCredentials, 'error');
+        }
     }
 
     isUserLocked(user) {
@@ -382,39 +388,55 @@ class ComponentManager {
     }
 
     logout() {
-        const token = localStorage.getItem('sessionToken');
-        if (token) {
-            this.sessions.delete(token);
-            localStorage.removeItem('sessionToken');
-        }
-        this.currentUser = null;
-        this.updateUIAfterLogout();
+        localStorage.removeItem('currentUser');
+        document.getElementById('loginStatus').textContent = 'Not logged in';
+        document.getElementById('loginBtn').style.display = 'inline-block';
+        document.getElementById('logoutBtn').style.display = 'none';
+        document.getElementById('profileBtn').style.display = 'none';
+        document.getElementById('usersBtn').style.display = 'none';
+        
+        // Return to home page
+        this.showHomePage();
+        
+        this.showNotification('Logout successful!', 'success');
     }
 
-    showProfile() {
+    showProfilePage() {
+        this.hideAllComponents();
+        const currentUser = this.getCurrentUser();
+        
+        if (!currentUser) {
+            this.showNotification('Please login to view profile', 'error');
+            return;
+        }
+
+        // Show and update profile page
         const profilePage = document.querySelector('.profile-page');
-        const componentList = document.querySelector('.component-list');
-        const requestsList = document.querySelector('.request-section');
-        const scannerSection = document.querySelector('.scanner-section');
-        const usersPage = document.querySelector('.users-page');
-
-        // Hide all other sections except scanner
-        componentList.style.display = 'none';
-        requestsList.style.display = 'none';
-        usersPage.style.display = 'none';
-        scannerSection.style.display = 'block'; // Keep scanner visible
-
-        // Show profile page
         profilePage.style.display = 'block';
 
         // Update profile information
-        document.getElementById('profileId').textContent = this.currentUser.id;
-        document.getElementById('profileName').textContent = this.currentUser.name;
-        document.getElementById('profileRole').textContent = this.currentUser.role;
-        document.getElementById('profilePhone').textContent = this.currentUser.phone;
+        document.getElementById('profileId').textContent = currentUser.id;
+        document.getElementById('profileName').textContent = currentUser.name;
+        document.getElementById('profileRole').textContent = this.getRoleDisplay(currentUser.role);
+        document.getElementById('profilePhone').textContent = currentUser.phone;
+    }
 
-        // Update request statistics
-        this.updateRequestStats();
+    hideAllComponents() {
+        // Hide all main components
+        const components = [
+            '.profile-page',
+            '.user-management',
+            '.scanner-section',
+            '.component-list',
+            '.request-section',  // Add request materials section
+            '.users-page',
+            '#requestFormTemplate'  // Add request form template
+        ];
+        
+        components.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) element.style.display = 'none';
+        });
     }
 
     updateRequestStats() {
@@ -432,20 +454,39 @@ class ComponentManager {
     }
 
     showInventory() {
-        const profilePage = document.querySelector('.profile-page');
-        const componentList = document.querySelector('.component-list');
-        const requestsList = document.querySelector('.request-section');
-        const scannerSection = document.querySelector('.scanner-section');
-
-        profilePage.style.display = 'none';
-        componentList.style.display = 'block';
-        scannerSection.style.display = 'block'; // Always show scanner
+        // Hide other components
+        this.hideAllComponents();
         
-        if (this.currentUser.role === 'approver') {
-            requestsList.style.display = 'block';
-        } else {
-            requestsList.style.display = 'none';
+        // Show inventory section
+        const componentList = document.querySelector('.component-list');
+        if (componentList) {
+            componentList.style.display = 'block';
         }
+        
+        // Render component table
+        this.renderComponentTable();
+    }
+
+    renderComponentTable() {
+        const tbody = document.getElementById('componentTableBody');
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        
+        const filteredComponents = this.components.filter(component => 
+            component.id.toLowerCase().includes(searchTerm) ||
+            component.name.toLowerCase().includes(searchTerm)
+        );
+        
+        tbody.innerHTML = filteredComponents.map(component => `
+            <tr>
+                <td>${component.id}</td>
+                <td>${component.name}</td>
+                <td>${component.quantity}</td>
+                <td>${component.location}</td>
+                <td>${new Date(component.dateAdded).toLocaleDateString('vi-VN')}</td>
+                <td>${component.dateIssued ? new Date(component.dateIssued).toLocaleDateString('vi-VN') : '-'}</td>
+                <td>${component.notes || '-'}</td>
+            </tr>
+        `).join('');
     }
 
     updateUIForCurrentUser() {
@@ -478,7 +519,7 @@ class ComponentManager {
 
         // Update sidebar user info
         document.getElementById('sidebarUserName').textContent = 
-            this.currentUser ? this.currentUser.name : 'Hồ sơ người dùng (Chưa đăng nhập)';
+            this.currentUser ? this.currentUser.name : 'User Profile (Not logged in)';
         document.getElementById('sidebarUserRole').textContent = 
             this.currentUser ? roleNames[this.currentUser.role] : '';
         
@@ -506,20 +547,20 @@ class ComponentManager {
                 return `
                     <div class="request-item" onclick="componentManager.showRequestForm(${JSON.stringify(request).replace(/"/g, '&quot;')})">
                         ${this.currentUser.role === 'approver' ? 
-                            `<p>Người yêu cầu: ${requester ? requester.name : 'Unknown'}</p>` : 
+                            `<p>Requester: ${requester ? requester.name : 'Unknown'}</p>` : 
                             ''
                         }
-                        <p>Vật tư: ${component ? component.name : 'Unknown'}</p>
-                        <p>Số lượng: ${request.quantity}</p>
-                        <p>Trạng thái: ${statusNames[request.status]}</p>
-                        <p>Lý do: ${request.reason || 'Không có lý do'}</p>
+                        <p>Component: ${component ? component.name : 'Unknown'}</p>
+                        <p>Quantity: ${request.quantity}</p>
+                        <p>Status: ${statusNames[request.status]}</p>
+                        <p>Reason: ${request.reason || 'No reason provided'}</p>
                         ${this.currentUser.role === 'approver' && request.status === 'pending' ? `
                             <div class="request-actions">
                                 <button onclick="event.stopPropagation(); componentManager.handleRequest('${request.id}', 'approved')" class="btn btn-edit">
-                                    Duyệt
+                                    Approve
                                 </button>
                                 <button onclick="event.stopPropagation(); componentManager.handleRequest('${request.id}', 'rejected')" class="btn btn-delete">
-                                    Từ chối
+                                    Reject
                                 </button>
                             </div>
                         ` : ''}
@@ -540,7 +581,7 @@ class ComponentManager {
             if (component) {
                 component.quantity -= request.quantity;
                 component.dateIssued = new Date().toISOString();
-                component.notes += `\nXuất ${request.quantity} đơn vị theo yêu cầu ${requestId}`;
+                component.notes += `\nIssued ${request.quantity} units on request ${requestId}`;
                 this.saveToLocalStorage();
             }
         }
@@ -619,7 +660,7 @@ class ComponentManager {
             // Update current user display if this is the logged-in user
             if (this.currentUser && this.currentUser.id === userId) {
                 document.getElementById('loginStatus').textContent = 
-                    `Đã đăng nhập với: ${newName}`;
+                    `Logged in as: ${newName}`;
             }
         }
         
@@ -732,15 +773,6 @@ class ComponentManager {
         this.saveUsers();
         document.querySelector('.login-dialog').remove();
         alert('Password changed successfully');
-    }
-
-    // Update the logout method
-    logout() {
-        this.currentUser = null;
-        document.getElementById('loginStatus').textContent = 'Not logged in';
-        document.getElementById('logoutBtn').style.display = 'none';
-        document.getElementById('loginBtn').style.display = 'block';
-        this.updateUIForCurrentUser();
     }
 
     // Add method to show request dialog for requesters
@@ -929,8 +961,8 @@ class ComponentManager {
 
     // Add method to render users page
     renderUsersPage() {
-        const approverList = document.getElementById('approverList');
-        const requesterList = document.getElementById('requesterList');
+        const approverList = document.getElementById('approversList');
+        const requesterList = document.getElementById('requestersList');
 
         const renderUserCard = (user) => `
             <div class="user-card">
@@ -980,7 +1012,7 @@ class ComponentManager {
         const dialog = document.createElement('div');
         dialog.className = 'login-dialog scan-request-dialog';
         dialog.innerHTML = `
-            <h3>Request Scanned Component</h3>
+            <h3>Scanned Component Request</h3>
             <div class="scanned-info">
                 <div class="info-group">
                     <span class="info-label">Component:</span>
@@ -1059,140 +1091,53 @@ class ComponentManager {
         localStorage.setItem('requests', JSON.stringify(this.requests));
         this.renderRequests();
 
+        // Notify approvers
+        this.notifyApprovers(request);
+
         document.querySelector('.login-dialog').remove();
         alert('Request submitted successfully');
     }
 
     // Add showHomePage method to ComponentManager class
     showHomePage() {
-        // Hide all sections first
-        const sections = [
-            '.profile-page',
-            '.users-page',
-            '.request-section',
-            '.scanner-section',
-            '#userManagement'
-        ];
+        this.hideAllComponents();
         
-        sections.forEach(section => {
-            document.querySelector(section).style.display = 'none';
-        });
-
-        // Show component list (main inventory view)
-        const componentList = document.querySelector('.component-list');
-        componentList.style.display = 'block';
-
-        // If user is logged in and is approver, show requests section
-        if (this.currentUser?.role === 'approver') {
-            document.querySelector('.request-section').style.display = 'block';
+        // Show default components for home page
+        const currentUser = this.getCurrentUser();
+        
+        if (currentUser) {
+            // Show scanner section for all logged in users
+            const scannerSection = document.querySelector('.scanner-section');
+            if (scannerSection) scannerSection.style.display = 'block';
+            
+            // Show request section for approvers
+            if (currentUser.role === 'approver') {
+                const requestSection = document.querySelector('.request-section');
+                if (requestSection) requestSection.style.display = 'block';
+            }
         }
+    }
 
-        // Show scanner section if logged in
+    // Add updateSidebar method if not exists
+    updateSidebar() {
+        const sidebarUserName = document.getElementById('sidebarUserName');
+        const sidebarUserRole = document.getElementById('sidebarUserRole');
+        const adminMenu = document.getElementById('adminMenu');
+        
         if (this.currentUser) {
-            document.querySelector('.scanner-section').style.display = 'block';
-        }
-    }
-
-    // Add to ComponentManager class
-    toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('expanded');
-    }
-
-    // Add new method to ComponentManager class
-    showAddComponentDialog() {
-        if (!this.currentUser || this.currentUser.role !== 'approver') {
-            alert('Chỉ người phê duyệt mới có thể thêm linh kiện');
-            return;
-        }
-
-        const dialog = document.createElement('div');
-        dialog.className = 'login-dialog add-component-dialog';
-        dialog.innerHTML = `
-            <h3>Thêm Linh Kiện Mới</h3>
-            <div class="add-component-form">
-                <div class="form-row">
-                    <label for="componentId">Mã số:</label>
-                    <input type="text" id="componentId" required 
-                           placeholder="Nhập mã số linh kiện">
-                </div>
-                <div class="form-row">
-                    <label for="componentName">Tên:</label>
-                    <input type="text" id="componentName" required 
-                           placeholder="Nhập tên linh kiện">
-                </div>
-                <div class="form-row">
-                    <label for="componentQuantity">Số lượng:</label>
-                    <input type="number" id="componentQuantity" required 
-                           min="1" value="1">
-                </div>
-                <div class="form-row">
-                    <label for="componentLocation">Vị trí:</label>
-                    <input type="text" id="componentLocation" required 
-                           placeholder="Nhập vị trí lưu trữ">
-                </div>
-                <div class="error-message" id="addComponentError" style="display: none;"></div>
-                <div class="dialog-buttons">
-                    <button class="btn btn-edit" onclick="componentManager.submitNewComponent()">
-                        Thêm Linh Kiện
-                    </button>
-                    <button class="btn btn-delete" onclick="this.closest('.login-dialog').remove()">
-                        Hủy
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(dialog);
-    }
-
-    // Add method to handle new component submission
-    submitNewComponent() {
-        const id = document.getElementById('componentId').value.trim();
-        const name = document.getElementById('componentName').value.trim();
-        const quantity = parseInt(document.getElementById('componentQuantity').value);
-        const location = document.getElementById('componentLocation').value.trim();
-        const errorElement = document.getElementById('addComponentError');
-
-        // Validate inputs
-        if (!id || !name || !location) {
-            errorElement.textContent = 'Vui lòng điền đầy đủ thông tin';
-            errorElement.style.display = 'block';
-            return;
-        }
-
-        if (!quantity || quantity < 1) {
-            errorElement.textContent = 'Vui lòng nhập số lượng hợp lệ';
-            errorElement.style.display = 'block';
-            return;
-        }
-
-        // Check for duplicate ID
-        if (this.components.some(c => c.id === id)) {
-            errorElement.textContent = 'Mã số này đã tồn tại';
-            errorElement.style.display = 'block';
-            return;
-        }
-
-        // Create and add new component
-        const newComponent = new Component(id, name, quantity, location);
-        newComponent.notes = `Nhập kho thủ công: ${quantity} đơn vị`;
-        
-        this.components.push(newComponent);
-        this.saveToLocalStorage();
-        this.renderComponentTable();
-
-        // Close dialog and show success message
-        document.querySelector('.login-dialog').remove();
-        alert('Đã thêm linh kiện thành công');
-    }
-
-    // Add new method to handle user info click
-    handleUserInfoClick() {
-        if (this.currentUser) {
-            this.showProfile();
+            sidebarUserName.textContent = this.currentUser.name;
+            sidebarUserRole.textContent = roleNames[this.currentUser.role] || this.currentUser.role;
+            
+            // Show/hide admin menu
+            if (adminMenu) {
+                adminMenu.style.display = this.currentUser.role === 'admin' ? 'block' : 'none';
+            }
         } else {
-            this.showLoginDialog();
+            sidebarUserName.textContent = 'User Profile (Not logged in)';
+            sidebarUserRole.textContent = '';
+            if (adminMenu) {
+                adminMenu.style.display = 'none';
+            }
         }
     }
 
@@ -1202,26 +1147,435 @@ class ComponentManager {
         const requester = this.users.find(u => u.id === request.requesterId);
         const approver = this.users.find(u => u.role === 'approver');
         
-        // Update form fields
-        document.getElementById('requestDate').textContent = new Date(request.timestamp).toLocaleDateString('vi-VN');
-        document.getElementById('requestId').textContent = request.id;
-        document.getElementById('componentName').textContent = component.name;
-        document.getElementById('requestQuantity').textContent = request.quantity;
-        document.getElementById('requestReason').textContent = request.reason;
-        
-        // Update signatures
-        document.getElementById('requesterName').textContent = requester.name;
-        document.getElementById('requesterPosition').textContent = 'Người yêu cầu';
-        document.getElementById('requesterSignDate').textContent = new Date(request.timestamp).toLocaleDateString('vi-VN');
-        
-        if (request.status === 'approved') {
-            document.getElementById('approverName').textContent = approver.name;
-            document.getElementById('approverPosition').textContent = 'Người phê duyệt';
-            document.getElementById('approverSignDate').textContent = new Date().toLocaleDateString('vi-VN');
-        }
+        // Create form data object
+        const formData = {
+            id: request.id,
+            date: new Date(request.timestamp).toLocaleDateString('vi-VN'),
+            component: component.name,
+            quantity: request.quantity,
+            reason: request.reason,
+            requester: {
+                name: requester.name,
+                position: 'Requester',
+                date: new Date(request.timestamp).toLocaleDateString('vi-VN')
+            },
+            approver: request.status === 'approved' ? {
+                name: approver.name,
+                position: 'Approver',
+                date: new Date().toLocaleDateString('vi-VN')
+            } : null,
+            status: request.status
+        };
+
+        // Save form to storage
+        this.saveFormToStorage(formData);
         
         // Show form
-        document.getElementById('requestFormTemplate').style.display = 'block';
+        document.getElementById('requestFormTemplate').innerHTML = this.generateFormHTML(formData);
+        document.getElementById('requestFormTemplate').style.display = 'flex';
+
+        // Initialize signature pads after form is displayed
+        setTimeout(() => {
+            if (document.getElementById('requesterSignature')) {
+                this.initSignaturePad('requesterSignature');
+            }
+            if (document.getElementById('approverSignature')) {
+                this.initSignaturePad('approverSignature');
+            }
+        }, 100);
+    }
+
+    generateFormHTML(formData) {
+        return `
+        <div class="request-form">
+            <div class="form-header">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0yMCAxMkg4MEw5MCA2MEgxMEwyMCAxMloiIHN0cm9rZT0iIzAwZjg4IiBzdHJva2Utd2lkdGg9IjIiLz4KPHBhdGggZD0iTTM1IDI1TDUwIDUwTDY1IDI1IiBzdHJva2U9IiMwMGZmODgiIHN0cm9rZS13aWR0aD0iMiIvPgo8dGV4dCB4PSI1MCIgeT0iODAiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiMwMGZmODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSIwLjNlbSI+diBpIGUgdCBoIHU8L3RleHQ+Cjwvc3ZnPg==" 
+                     alt="VietPhu Logo" 
+                     class="form-logo">
+                <div class="form-meta">
+                    <div class="form-number">Số: ${formData.id}</div>
+                    <div class="form-date">Ngày: ${formData.date}</div>
+                </div>
+            </div>
+            
+            <h2 class="form-title">REQUEST FORM</h2>
+            
+            <div class="form-content">
+                <div class="form-section">
+                    <div class="form-row">
+                        <label>Component:</label>
+                        <span>${formData.component}</span>
+                    </div>
+                    <div class="form-row">
+                        <label>Quantity:</label>
+                        <span>${formData.quantity}</span>
+                    </div>
+                    <div class="form-row">
+                        <label>Reason:</label>
+                        <span>${formData.reason}</span>
+                    </div>
+                    <div class="form-row">
+                        <label>Status:</label>
+                        <span class="status-${formData.status}">${statusNames[formData.status]}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-signatures">
+                <div class="signature-section">
+                    <p class="signature-title">Requester</p>
+                    <div class="signature-box">
+                        ${formData.requester.signature ? `
+                            <img src="${formData.requester.signature}" class="saved-signature" alt="Requester Signature">
+                        ` : this.currentUser.id === formData.requester.id ? `
+                            <div class="signature-pad-container">
+                                <canvas id="requesterSignature" class="signature-pad"></canvas>
+                                <div class="signature-pad-actions">
+                                    <button class="btn btn-small" id="requesterSignatureClear">
+                                        Clear Signature
+                                    </button>
+                                </div>
+                            </div>
+                        ` : '<span class="pending">Pending</span>'}
+                        <span class="signature-name">${formData.requester.name}</span>
+                        <span class="signature-position">${formData.requester.position}</span>
+                        <span class="signature-date">${formData.requester.date}</span>
+                    </div>
+                </div>
+                
+                <div class="signature-section">
+                    <p class="signature-title">Approver</p>
+                    <div class="signature-box">
+                        ${formData.approver ? 
+                            formData.approver.signature ? `
+                                <img src="${formData.approver.signature}" class="saved-signature" alt="Approver Signature">
+                            ` : this.currentUser.role === 'approver' ? `
+                                <div class="signature-pad-container">
+                                    <canvas id="approverSignature" class="signature-pad"></canvas>
+                                    <div class="signature-pad-actions">
+                                        <button class="btn btn-small" id="approverSignatureClear">
+                                            Clear Signature
+                                        </button>
+                                    </div>
+                                </div>
+                            ` : '<span class="pending">Pending</span>'
+                        : '<span class="pending">Pending Approval</span>'}
+                        ${formData.approver ? `
+                            <span class="signature-name">${formData.approver.name}</span>
+                            <span class="signature-position">${formData.approver.position}</span>
+                            <span class="signature-date">${formData.approver.date}</span>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                ${this.canSign(formData) ? `
+                    <button class="btn btn-edit" onclick="componentManager.saveSignature('${formData.id}')">
+                        Save Signature
+                    </button>
+                ` : ''}
+                <button class="btn btn-edit" onclick="componentManager.printForm('${formData.id}')">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none">
+                        <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                        <path d="M6 14h12v8H6z"/>
+                    </svg>
+                    Print Form
+                </button>
+                <button class="btn btn-delete" onclick="document.getElementById('requestFormTemplate').style.display='none'">
+                    Close
+                </button>
+            </div>
+        </div>
+        `;
+    }
+
+    canSign(formData) {
+        if (!this.currentUser) return false;
+        
+        if (this.currentUser.id === formData.requester.id && !formData.requester.signature) {
+            return true;
+        }
+        
+        if (this.currentUser.role === 'approver' && 
+            formData.status === 'pending' && 
+            (!formData.approver || !formData.approver.signature)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    saveSignature(formId) {
+        const form = this.savedForms.find(f => f.id === formId);
+        if (!form) return;
+
+        if (this.currentUser.id === form.requester.id) {
+            const signaturePad = this.signaturePads.get('requesterSignature');
+            if (signaturePad && !signaturePad.isEmpty()) {
+                form.requester.signature = signaturePad.toDataURL();
+            }
+        } else if (this.currentUser.role === 'approver') {
+            const signaturePad = this.signaturePads.get('approverSignature');
+            if (signaturePad && !signaturePad.isEmpty()) {
+                if (!form.approver) form.approver = {};
+                form.approver.signature = signaturePad.toDataURL();
+            }
+        }
+
+        this.saveFormToStorage(form);
+        this.showRequestForm(form); // Refresh the form display
+    }
+
+    saveFormToStorage(formData) {
+        // Add to saved forms array
+        this.savedForms.push({
+            ...formData,
+            savedDate: new Date().toISOString()
+        });
+        
+        // Keep only last 100 forms
+        if (this.savedForms.length > 100) {
+            this.savedForms = this.savedForms.slice(-100);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('savedForms', JSON.stringify(this.savedForms));
+    }
+
+    printForm(formId) {
+        const form = this.savedForms.find(f => f.id === formId);
+        if (!form) return;
+
+        // Create printable version
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Request Form ${form.id}</title>
+                    <style>
+                        ${this.getPrintStyles()}
+                    </style>
+                </head>
+                <body>
+                    ${this.generateFormHTML(form)}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+
+    getPrintStyles() {
+        return `
+            /* Add print-specific styles here */
+            @page {
+                size: A4;
+                margin: 2cm;
+            }
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+            }
+            .request-form {
+                max-width: 100%;
+                margin: 0;
+                padding: 20px;
+            }
+            /* ... more print styles ... */
+        `;
+    }
+
+    initSignaturePad(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        const signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgba(255, 255, 255, 0)',
+            penColor: 'rgb(0, 168, 255)',
+            velocityFilterWeight: 0.7,
+        });
+        
+        this.signaturePads.set(canvasId, signaturePad);
+        
+        // Add clear button functionality
+        const clearBtn = document.getElementById(`${canvasId}Clear`);
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => signaturePad.clear());
+        }
+        
+        return signaturePad;
+    }
+
+    initNotifications() {
+        // Create notification container if it doesn't exist
+        if (!document.getElementById('notificationContainer')) {
+            const container = document.createElement('div');
+            container.id = 'notificationContainer';
+            document.body.appendChild(container);
+        }
+    }
+
+    notifyApprovers(request) {
+        const component = this.components.find(c => c.id === request.componentId);
+        const requester = this.users.find(u => u.id === request.requesterId);
+
+        // Create notification
+        const notification = {
+            id: `NOTIFY${Date.now()}`,
+            message: `New request from ${requester.name}: ${request.quantity} ${component.name}`,
+            timestamp: new Date(),
+            read: false,
+            requestId: request.id
+        };
+
+        this.notifications.push(notification);
+        this.showNotification(notification);
+
+        // Store notifications
+        localStorage.setItem('notifications', JSON.stringify(this.notifications));
+    }
+
+    showNotification(notification) {
+        const container = document.getElementById('notificationContainer');
+        const notificationElement = document.createElement('div');
+        notificationElement.className = 'notification-toast';
+        notificationElement.innerHTML = `
+            <div class="notification-content">
+                <div class="notification-header">
+                    <svg class="notification-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" 
+                              stroke-linecap="round" 
+                              stroke-linejoin="round"/>
+                        <path d="M12 11v6M9 14h6" 
+                              stroke-linecap="round" 
+                              stroke-linejoin="round"/>
+                    </svg>
+                    <span class="notification-title">New Request</span>
+                </div>
+                <p>${notification.message}</p>
+                <div class="notification-actions">
+                    <button class="btn btn-small btn-edit" 
+                            onclick="componentManager.viewRequest('${notification.requestId}')">
+                        View Details
+                    </button>
+                    <button class="btn btn-small" 
+                            onclick="this.closest('.notification-toast').remove()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(notificationElement);
+
+        // Auto remove after 10 seconds
+        setTimeout(() => {
+            if (notificationElement.parentNode) {
+                notificationElement.remove();
+            }
+        }, 10000);
+    }
+
+    viewRequest(requestId) {
+        const request = this.requests.find(r => r.id === requestId);
+        if (request) {
+            this.showRequestForm(request);
+        }
+    }
+
+    checkAdminAccess() {
+        const currentUser = this.getCurrentUser();
+        return currentUser && currentUser.role === 'admin';
+    }
+
+    showUserManagement() {
+        if (!this.checkAdminAccess()) {
+            this.showNotification('Only admin can access this section', 'error');
+            return;
+        }
+
+        // Hide other components
+        this.hideAllComponents();
+        
+        // Show user management section
+        document.querySelector('.user-management').style.display = 'block';
+        
+        // Load users data
+        this.loadUsers();
+    }
+
+    loadUsers() {
+        // Example users data - replace with your actual data source
+        const users = [
+            { id: 'admin', name: 'Admin', role: 'admin', phone: '0123456789' },
+            { id: 'user1', name: 'User 1', role: 'approver', phone: '0123456788' },
+            // ... more users
+        ];
+
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '';
+
+        users.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${user.id}</td>
+                <td>${user.name}</td>
+                <td>${this.getRoleDisplay(user.role)}</td>
+                <td>${user.phone}</td>
+                <td>
+                    <button class="btn btn-small" onclick="componentManager.editUser('${user.id}')">
+                        Edit
+                    </button>
+                    <button class="btn btn-small btn-danger" onclick="componentManager.deleteUser('${user.id}')">
+                        Delete
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    getRoleDisplay(role) {
+        const roles = {
+            'admin': 'Administrator',
+            'approver': 'Approver',
+            'requester': 'Requester'
+        };
+        return roles[role] || role;
+    }
+
+    // Add these methods to handle user management
+    showAddUserForm() {
+        // Implement add user form
+    }
+
+    editUser(userId) {
+        // Implement edit user
+    }
+
+    deleteUser(userId) {
+        // Implement delete user
+    }
+
+    toggleMachineContent(header) {
+        const content = header.nextElementSibling;
+        const isExpanded = header.classList.contains('expanded');
+        
+        // Toggle the expanded class
+        header.classList.toggle('expanded');
+        
+        // Toggle content visibility with animation
+        if (isExpanded) {
+            content.style.maxHeight = '0';
+            setTimeout(() => {
+                content.style.display = 'none';
+            }, 300);
+        } else {
+            content.style.display = 'block';
+            setTimeout(() => {
+                content.style.maxHeight = content.scrollHeight + 'px';
+            }, 0);
+        }
     }
 }
 
@@ -1230,29 +1584,30 @@ const componentManager = new ComponentManager();
 
 // Update error messages
 const errorMessages = {
-    invalidCredentials: 'Mã người dùng hoặc mật khẩu không đúng',
-    fillAllFields: 'Vui lòng điền đầy đủ thông tin',
-    accountLocked: 'Tài khoản đã bị khóa. Vui lòng thử lại sau {minutes} phút',
-    invalidQuantity: 'Vui lòng nhập số lượng hợp lệ',
-    provideReason: 'Vui lòng cung cấp lý do yêu cầu',
-    requestSuccess: 'Đã gửi yêu cầu thành công',
-    loginRequired: 'Vui lòng đăng nhập để thực hiện thao tác này',
-    invalidQRCode: 'Mã QR không hợp lệ',
-    componentAdded: 'Đã thêm linh kiện vào kho!',
-    scanSuccess: 'Quét mã thành công!'
+    invalidCredentials: 'Invalid user ID or password',
+    fillAllFields: 'Please fill in all fields',
+    accountLocked: 'Account is locked. Please try again in {minutes} minutes',
+    invalidQuantity: 'Please enter a valid quantity',
+    provideReason: 'Please provide a reason for the request',
+    requestSuccess: 'Request sent successfully',
+    loginRequired: 'Please login to perform this action',
+    invalidQRCode: 'Invalid QR code',
+    componentAdded: 'Component added to inventory!',
+    scanSuccess: 'Scan successful!'
 };
 
 // Update role names
 const roleNames = {
-    approver: 'Người phê duyệt',
-    requester: 'Người yêu cầu'
+    admin: 'Administrator',
+    approver: 'Approver',
+    requester: 'Requester'
 };
 
 // Update status names
 const statusNames = {
-    pending: 'Đang chờ',
-    approved: 'Đã duyệt',
-    rejected: 'Từ chối'
+    pending: 'Pending',
+    approved: 'Approved',
+    rejected: 'Rejected'
 };
 
 const users = {
@@ -1265,13 +1620,19 @@ const users = {
     'approver': {
         password: '123456',
         role: 'approver',
-        name: 'Người Phê Duyệt',
+        name: 'Approver',
         phone: '0123456789'
     },
     'requester': {
         password: '123456',
         role: 'requester',
-        name: 'Người Yêu Cầu',
+        name: 'Requester',
         phone: '0123456789'
     }
-}; 
+};
+
+// Update notification messages
+showNotification('Login successful!', 'success');
+showNotification('Only admin can access this section', 'error');
+showNotification('Logout successful!', 'success');
+showNotification('Please login to view profile', 'error'); 
